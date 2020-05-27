@@ -1,4 +1,4 @@
-// Copyright 2018 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-rootProject.name = 'com.google.firebase'
+package com.google.firebase.decoders;
 
-//Note: do not add subprojects to this file. Instead add them to subprojects.gradle
+class ClassToken<T> extends TypeToken<T> {
+  private Class<T> rawType;
+  private TypeTokenContainer typeArguments;
 
-apply from: 'gradle/projectSettings.gradle'
+  ClassToken(Class<T> token) {
+    this.rawType = token;
+    typeArguments = null;
+  }
 
-discoverSubprojects(file('subprojects.cfg')).each {
-  include ":$it"
+  ClassToken(Class<T> rawType, TypeTokenContainer typeArguments) {
+    this.rawType = rawType;
+    this.typeArguments = typeArguments;
+  }
+
+  public Class<T> getRawType() {
+    return rawType;
+  }
+
+  public TypeTokenContainer getTypeArguments() {
+    return typeArguments;
+  }
 }
-
-renameBuildScripts(rootProject)
-
-apply from: new File(settingsDir, 'gradle/buildCache.gradle')

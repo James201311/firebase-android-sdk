@@ -1,4 +1,4 @@
-// Copyright 2018 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-rootProject.name = 'com.google.firebase'
+package com.google.firebase.decoders;
 
-//Note: do not add subprojects to this file. Instead add them to subprojects.gradle
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 
-apply from: 'gradle/projectSettings.gradle'
+public abstract class Safe<T> {
 
-discoverSubprojects(file('subprojects.cfg')).each {
-  include ":$it"
+  private final Type type;
+
+  Safe() {
+    Type superclass = getClass().getGenericSuperclass();
+    if (superclass instanceof Class) {
+      throw new RuntimeException("Missing type parameters");
+    }
+    this.type = ((ParameterizedType) superclass).getActualTypeArguments()[0];
+  }
+
+  Type getType() {
+    return this.type;
+  }
 }
-
-renameBuildScripts(rootProject)
-
-apply from: new File(settingsDir, 'gradle/buildCache.gradle')
