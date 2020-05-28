@@ -14,15 +14,15 @@
 
 package com.google.firebase.decoders;
 
+import static org.junit.Assert.assertThrows;
+import static com.google.common.truth.Truth.assertThat;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
 
 @RunWith(JUnit4.class)
 public class TypeTokenTest {
@@ -31,79 +31,121 @@ public class TypeTokenTest {
   //Primitive type
   @Test
   public void primitiveType_typeIsCorrectlyCaptured(){
-    ClassToken<?> intToken = (ClassToken<?>) TypeToken.of(int.class);
-    ClassToken<?> doubleToken = (ClassToken<?>) TypeToken.of(double.class);
-    ClassToken<?> floatToken = (ClassToken<?>) TypeToken.of(float.class);
-    ClassToken<?> longToken = (ClassToken<?>) TypeToken.of(long.class);
-    ClassToken<?> byteToken = (ClassToken<?>) TypeToken.of(byte.class);
-    ClassToken<?> charToken = (ClassToken<?>) TypeToken.of(char.class);
-    ClassToken<?> shortToken = (ClassToken<?>) TypeToken.of(short.class);
-    ClassToken<?> booleanToken = (ClassToken<?>) TypeToken.of(boolean.class);
+    TypeToken<Integer> integerTypeToken = TypeToken.of(int.class);
+    assertThat(integerTypeToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<Integer> intToken = (TypeToken.ClassToken<Integer>) integerTypeToken;
+    assertThat(intToken.getRawType()).isEqualTo(int.class);
 
-    assertEquals(intToken.getRawType(), int.class);
-    assertEquals(doubleToken.getRawType(), double.class);
-    assertEquals(floatToken.getRawType(), float.class);
-    assertEquals(longToken.getRawType(), long.class);
-    assertEquals(byteToken.getRawType(), byte.class);
-    assertEquals(charToken.getRawType(), char.class);
-    assertEquals(shortToken.getRawType(), short.class);
-    assertEquals(booleanToken.getRawType(), boolean.class);
+    TypeToken<Boolean> booleanTypeToken = TypeToken.of(boolean.class);
+    assertThat(booleanTypeToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<Boolean> booleanToken = (TypeToken.ClassToken<Boolean>) booleanTypeToken;
+    assertThat(booleanToken.getRawType()).isEqualTo(boolean.class);
   }
 
   //Array type
   @Test
   public void generalArrayTypeWithSafe_componentTypeIsCorrectlyCaptured() {
-    ClassToken<?> fooComponentType = (ClassToken<?>) ((ArrayToken<?>)TypeToken.of(new Safe<Foo[]>() {})).getComponentType();
-    ClassToken<?> intComponentType = (ClassToken<?>) ((ArrayToken<?>)TypeToken.of(new Safe<int[]>() {})).getComponentType();
-
-    assertEquals(Foo.class, fooComponentType.getRawType());
-    assertEquals(int.class, intComponentType.getRawType());
+    TypeToken<Foo[]> typeToken = TypeToken.of(new Safe<Foo[]>() {});
+    assertThat(typeToken).isInstanceOf(TypeToken.ArrayToken.class);
+    TypeToken.ArrayToken<Foo[]> arrayToken = (TypeToken.ArrayToken<Foo[]>) typeToken;
+    TypeToken<?> componentTypeToken = arrayToken.getComponentType();
+    assertThat(componentTypeToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<Foo> componentToken = (TypeToken.ClassToken<Foo>) componentTypeToken;
+    assertThat(componentToken.getRawType()).isEqualTo(Foo.class);
   }
 
   @Test
   public void generalArrayTypeWithoutSafe_componentTypeIsCorrectlyCaptured() {
-    ClassToken<?> fooComponentType = (ClassToken<?>) ((ArrayToken<?>) TypeToken.of(Foo[].class)).getComponentType();
-    ClassToken<?> intComponentType = (ClassToken<?>) ((ArrayToken<?>) TypeToken.of(int[].class)).getComponentType();
-
-    assertEquals(Foo.class, fooComponentType.getRawType());
-    assertEquals(int.class, intComponentType.getRawType());
+    TypeToken<Foo[]> typeToken = TypeToken.of(Foo[].class);
+    assertThat(typeToken).isInstanceOf(TypeToken.ArrayToken.class);
+    TypeToken.ArrayToken<Foo[]> arrayToken = (TypeToken.ArrayToken<Foo[]>) typeToken;
+    TypeToken<?> componentTypeToken = arrayToken.getComponentType();
+    assertThat(componentTypeToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<Foo> componentToken = (TypeToken.ClassToken<Foo>) componentTypeToken;
+    assertThat(componentToken.getRawType()).isEqualTo(Foo.class);
   }
 
   @Test
   public void genericArrayType_rawTypeIsCorrectlyCaptured() {
-    ClassToken<?> componentType = (ClassToken<?>) ((ArrayToken<?>) TypeToken.of(new Safe<List<String>[]>() {})).getComponentType();
-    assertEquals(List.class, componentType.getRawType());
+    TypeToken<List<String>[]> typeToken = TypeToken.of(new Safe<List<String>[]>(){});
+    assertThat(typeToken).isInstanceOf(TypeToken.ArrayToken.class);
+    TypeToken.ArrayToken<List<String>[]> arrayToken = (TypeToken.ArrayToken<List<String>[]>) typeToken;
+    TypeToken<List<String>> componentType = (TypeToken<List<String>>) arrayToken.getComponentType();
+    assertThat(componentType).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<List<String>> componentClassType = (TypeToken.ClassToken<List<String>>) componentType;
+    assertThat(componentClassType.getRawType()).isEqualTo(List.class);
+    TypeToken<String> argumentType = ((TypeToken.ClassToken<List<String>>) componentType).getTypeArguments().at(0);
+    assertThat(argumentType).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<String> argumentClassType = (TypeToken.ClassToken<String>) argumentType;
+    assertThat(argumentClassType.getRawType()).isEqualTo(String.class);
   }
 
   //Plain Class Type
-  public void plainClassType_rawTypeIsCorrectlyCaptured() {
-    assertEquals(Foo.class, ((ClassToken<?>) TypeToken.of(new Safe<Foo>() {})).getRawType());
+  @Test
+  public void plainClassTypeWithSafe_rawTypeIsCorrectlyCaptured() {
+    TypeToken<Foo> typeToken = TypeToken.of(new Safe<Foo>() {});
+    assertThat(typeToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<Foo> typeClassToken = (TypeToken.ClassToken<Foo>) typeToken;
+    assertThat(typeClassToken.getRawType()).isEqualTo(Foo.class);
+  }
+
+  @Test
+  public void plainClassTypeWithoutSafe_rawTypeIsCorrectlyCaptured() {
+    TypeToken<Foo> typeToken = TypeToken.of(Foo.class);
+    assertThat(typeToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<Foo> typeClassToken = (TypeToken.ClassToken<Foo>) typeToken;
+    assertThat(typeClassToken.getRawType()).isEqualTo(Foo.class);
   }
 
   //Generic Type
   @Test
   public void genericType_actualTypeParametersAreCorrectlyCaptured(){
-    TypeTokenContainer typeTokenContainer = ((ClassToken<?>) TypeToken.of(new Safe<Map<String, Foo>>() {})).getTypeArguments();
-
-    assertEquals(String.class, ((ClassToken<?>) typeTokenContainer.at(0)).getRawType());
-    assertEquals(Foo.class, ((ClassToken<?>) typeTokenContainer.at(1)).getRawType());
+    TypeToken<Map<String, Foo>> mapTypeToken = TypeToken.of(new Safe<Map<String, Foo>>() {});
+    assertThat(mapTypeToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<Map<String, Foo>> mapClassToken = (TypeToken.ClassToken<Map<String, Foo>>) mapTypeToken;
+    TypeTokenContainer typeTokenContainer = mapClassToken.getTypeArguments();
+    TypeToken<String> firstArgumentToken = typeTokenContainer.at(0);
+    TypeToken<Foo> secondArgumentTypeToken = typeTokenContainer.at(1);
+    assertThat(firstArgumentToken).isInstanceOf(TypeToken.ClassToken.class);
+    assertThat(secondArgumentTypeToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<String> firstArgumentClassToken = (TypeToken.ClassToken<String>) firstArgumentToken;
+    TypeToken.ClassToken<Foo> secondArgumentClassToken = (TypeToken.ClassToken<Foo>) secondArgumentTypeToken;
+    assertThat(firstArgumentClassToken.getRawType()).isEqualTo(String.class);
+    assertThat(secondArgumentClassToken.getRawType()).isEqualTo(Foo.class);
   }
 
   @Test
   public void nestedGenericType_actualTypeParametersAreCorrectlyCaptured(){
-    TypeTokenContainer typeTokenContainer = ((ClassToken<?>) TypeToken.of(new Safe<Map<String, List<String>>>() {})).getTypeArguments();
-    assertEquals(String.class, ((ClassToken<?>) typeTokenContainer.at(0)).getRawType());
-    ClassToken<?> listOfStringTypeToken = ((ClassToken<?>) typeTokenContainer.at(1));
-    ClassToken<?> stringTypeToken = (ClassToken<?>) listOfStringTypeToken.getTypeArguments().at(0);
-
-    assertEquals(List.class, ((ClassToken<?>) typeTokenContainer.at(1)).getRawType());
-    assertEquals(String.class, stringTypeToken.getRawType());
+    TypeToken<List<List<String>>> typeToken = TypeToken.of(new Safe<List<List<String>>>(){});
+    assertThat(typeToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<List<List<String>>> typeClassToken = (TypeToken.ClassToken<List<List<String>>>) typeToken;
+    TypeToken<List<String>> componentToken = typeClassToken.getTypeArguments().at(0);
+    assertThat(componentToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<List<String>> componentClassToken = (TypeToken.ClassToken<List<String>>) componentToken;
+    assertThat(componentClassToken.getRawType()).isEqualTo(List.class);
+    TypeToken<String> innerComponentToken = componentClassToken.getTypeArguments().at(0);
+    assertThat(innerComponentToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<String> innerComponentClassToken = (TypeToken.ClassToken<String>) innerComponentToken;
+    assertThat(innerComponentClassToken.getRawType()).isEqualTo(String.class);
   }
 
-  //Wildcard Type
+  //Bounded Wildcard Type
   @Test
-  public void ar(){
-    ClassToken<?> classToken = (ClassToken<?>) ((ClassToken<?>) TypeToken.of(new Safe<List<? extends Number>>(){})).getTypeArguments().at(0);
-    assertEquals(Number.class, classToken.getRawType());
+  public void boundedWildcardTypeWithExtend_actualTypeParameterIsCastedToUpperBound(){
+    TypeToken<List<? extends Number>> typeToken = TypeToken.of(new Safe<List<? extends Number>>() {});
+    assertThat(typeToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<List<? extends Number>> typeClassToken = (TypeToken.ClassToken<List<? extends Number>>) typeToken;
+    TypeToken<Number> componentType = typeClassToken.getTypeArguments().at(0);
+    assertThat(componentType).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<Number> componentClassType = (TypeToken.ClassToken<Number>) componentType;
+    assertThat(componentClassType.getRawType()).isEqualTo(Number.class);
+  }
+
+  @Test
+  public void boundedWildcardTypeWithSuper_notSupported(){
+    TypeToken<List<? super Foo>> typeToken = TypeToken.of(new Safe<List<? super Foo>>() {});
+    assertThat(typeToken).isInstanceOf(TypeToken.ClassToken.class);
+    TypeToken.ClassToken<List<? super Foo>> typeClassToken = (TypeToken.ClassToken<List<? super Foo>>) typeToken;
+    assertThrows("<? super T> is not supported", RuntimeException.class, ()-> {typeClassToken.getTypeArguments().at(0);});
   }
 }

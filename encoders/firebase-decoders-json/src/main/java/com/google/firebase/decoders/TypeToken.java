@@ -21,19 +21,26 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 
+//TODO: implement hashCode(), equals(), and toString().
 public abstract class TypeToken<T> {
-
 
   @NonNull
   public static <T> TypeToken<T> of(@NonNull Safe<T> token) {
-    Type type = token.getType();
+    Type superclass = token.getClass().getGenericSuperclass();
+    if (superclass instanceof Class) {
+      throw new RuntimeException("Missing type parameters");
+    }
+    Type type = ((ParameterizedType) superclass).getActualTypeArguments()[0];
     return of(type);
   }
 
   @NonNull
   private static <T> TypeToken<T> of(@NonNull Type type) {
     if(type instanceof WildcardType) {
-      return of(((WildcardType) type).getUpperBounds()[0]);
+      if(((WildcardType) type).getLowerBounds().length == 0) {
+        return of(((WildcardType) type).getUpperBounds()[0]);
+      }
+      throw new RuntimeException("<? super T> is not supported");
     }
 
     if (type instanceof GenericArrayType) {
@@ -65,9 +72,47 @@ public abstract class TypeToken<T> {
   public static <T> TypeToken<T> of(@NonNull Class<T> typeToken) {
     if (typeToken.isArray()) {
       Class<?> componentTypeToken = typeToken.getComponentType();
-      assert componentTypeToken != null;
       return new ArrayToken<T>(TypeToken.of(componentTypeToken));
     }
     return new ClassToken<T>((Class<T>) typeToken);
+  }
+
+
+  public static class ClassToken<T> extends TypeToken<T> {
+    private final Class<T> rawType;
+    private final TypeTokenContainer typeArguments;
+
+    private ClassToken(Class<T> token) {
+      this.rawType = token;
+      typeArguments = null;
+    }
+
+    private ClassToken(Class<T> rawType, TypeTokenContainer typeArguments) {
+      this.rawType = rawType;
+      this.typeArguments = typeArguments;
+    }
+
+    @NonNull
+    public Class<T> getRawType() {
+      return rawType;
+    }
+
+    @NonNull
+    public TypeTokenContainer getTypeArguments() {
+      return typeArguments;
+    }
+  }
+
+  public static class ArrayToken<T> extends TypeToken<T> {
+    private final TypeToken<?> componentType;
+
+    private ArrayToken(TypeToken<?> componentType) {
+      this.componentType = componentType;
+    }
+
+    @NonNull
+    public TypeToken<?> getComponentType() {
+      return componentType;
+    }
   }
 }

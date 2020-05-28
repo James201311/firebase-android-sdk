@@ -14,22 +14,4 @@
 
 package com.google.firebase.decoders;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-
-public abstract class Safe<T> {
-
-  private final Type type;
-
-  Safe() {
-    Type superclass = getClass().getGenericSuperclass();
-    if (superclass instanceof Class) {
-      throw new RuntimeException("Missing type parameters");
-    }
-    this.type = ((ParameterizedType) superclass).getActualTypeArguments()[0];
-  }
-
-  Type getType() {
-    return this.type;
-  }
-}
+public abstract class Safe<T> { }

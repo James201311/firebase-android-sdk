@@ -14,10 +14,9 @@
 
 package com.google.firebase.decoders;
 
-        import androidx.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 public interface TypeTokenContainer {
-
     @NonNull
     <T> TypeToken<T> at(int index);
 }
