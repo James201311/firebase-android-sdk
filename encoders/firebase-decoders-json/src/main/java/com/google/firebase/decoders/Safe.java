@@ -14,4 +14,12 @@
 
 package com.google.firebase.decoders;
 
+/**
+ * Represents a generic type {@code T}.
+ *
+ * <p>It forces clients to create a subclass to be able to retrieve the type information even at runtime.
+ *
+ * <p>For example, creating an empty anonymous inner class:
+ * <p>{@code Safe<List<String>> list = new Safe<List<String>>() {};}
+ */
 public abstract class Safe<T> { }

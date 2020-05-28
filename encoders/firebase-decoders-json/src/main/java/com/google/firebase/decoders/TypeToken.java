@@ -22,8 +22,30 @@ import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 
 //TODO: implement hashCode(), equals(), and toString().
+
+/**
+ *  {@link TypeToken} is used to represent types supported by the library in a type-safe manner.
+ *
+ * <p> {@link TypeToken} supports the following types:
+ * <ol>
+ *   <li>Primitive types</li>
+ *   <li>Array Types: primitive arrays(i.e. {@code int[]}) and object arrays(i.e. {@code Foo[]})</li>
+ *   <li>Plain class types. i.e. {@code Foo}</li>
+ *   <li>Generic types. i.e. {@code Foo<String, Double>}</li>
+ *   <li>Wildcard types: only support {@code Foo<? extend Bar>} by downgrading it to {@code Foo<Bar>},
+ *   and throw exception when stumbled upon {@code Foo<? super Bar>}.
+ *   </li>
+ * </ol>
+ */
 public abstract class TypeToken<T> {
 
+  /**
+   * Return an {@link TypeToken} to represent generic type {@code T}.
+   *
+   * <p>For example:
+   * <p>Create an {@code TypeToken<List<String>} of generic type {@code List<String>}:
+   * <p>{@code TypeToken<Link<String>> token = TypeToken.of(new Safe<Link<String>>() {});}
+   * */
   @NonNull
   public static <T> TypeToken<T> of(@NonNull Safe<T> token) {
     Type superclass = token.getClass().getGenericSuperclass();
@@ -68,7 +90,13 @@ public abstract class TypeToken<T> {
     return new ClassToken<T>(rawType, container);
   }
 
-  @NonNull
+  /**
+   * Return an {@link TypeToken} to represent plain class type {@code T}.
+   *
+   * <p>For example:
+   * <p>Create an {@code TypeToken<Foo>} of type {@code Foo}:
+   * <p>{@code TypeToken<Foo> token = TypeToken.of(Foo.class);}
+   * */  @NonNull
   public static <T> TypeToken<T> of(@NonNull Class<T> typeToken) {
     if (typeToken.isArray()) {
       Class<?> componentTypeToken = typeToken.getComponentType();
@@ -78,6 +106,10 @@ public abstract class TypeToken<T> {
   }
 
 
+  /**
+   *  {@link ClassToken} is used to represent types in a type-safe manner, including Primitive types, Plain class types,
+   *  Generic types, and Wildcard types.
+   */
   public static class ClassToken<T> extends TypeToken<T> {
     private final Class<T> rawType;
     private final TypeTokenContainer typeArguments;
@@ -103,6 +135,10 @@ public abstract class TypeToken<T> {
     }
   }
 
+  /**
+   *  {@link ArrayToken} is used to represent Array types in a type-safe manner.
+   *  such as: primitive arrays(i.e. {@code int[]}) and object arrays(i.e. {@code Foo[]})</li>
+   */
   public static class ArrayToken<T> extends TypeToken<T> {
     private final TypeToken<?> componentType;
 
