@@ -17,9 +17,10 @@ package com.google.firebase.decoders;
 import androidx.annotation.NonNull;
 
 /**
- * {@link TypeTokenContainer} is used to get actual type parameter in a generic class at given index.
+ * {@link TypeTokenContainer} is used to get actual type parameter in a generic class at given
+ * index.
  */
 public interface TypeTokenContainer {
-    @NonNull
-    <T> TypeToken<T> at(int index);
+  @NonNull
+  <T> TypeToken<T> at(int index);
 }
