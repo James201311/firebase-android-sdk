@@ -50,44 +50,10 @@ public abstract class TypeToken<T> {
   public static <T> TypeToken<T> of(@NonNull Safe<T> token) {
     Type superclass = token.getClass().getGenericSuperclass();
     if (superclass instanceof Class) {
-      throw new RuntimeException("Missing type parameters");
+      throw new IllegalArgumentException("Missing type parameters");
     }
     Type type = ((ParameterizedType) superclass).getActualTypeArguments()[0];
     return of(type);
-  }
-
-  @NonNull
-  private static <T> TypeToken<T> of(@NonNull Type type) {
-    if(type instanceof WildcardType) {
-      if(((WildcardType) type).getLowerBounds().length == 0) {
-        return of(((WildcardType) type).getUpperBounds()[0]);
-      }
-      throw new RuntimeException("<? super T> is not supported");
-    }
-
-    if (type instanceof GenericArrayType) {
-      Type componentType = ((GenericArrayType) type).getGenericComponentType();
-      return new ArrayToken<T>(TypeToken.of(componentType));
-    }
-
-    //Regular Class Type || Primitive Type || Non-Generic Array Type
-    if (type instanceof Class<?>) {
-      Class<T> typeToken = (Class<T>) type;
-      return of(typeToken);
-    }
-
-    ParameterizedType parameterizedType = (ParameterizedType) type;
-    Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-    Class<T> rawType = (Class<T>) (parameterizedType.getRawType());
-
-    TypeTokenContainer container = new TypeTokenContainer() {
-      @NonNull
-      @Override
-      public <T> TypeToken<T> at(int index) {
-        return TypeToken.of(actualTypeArguments[index]);
-      }
-    };
-    return new ClassToken<T>(rawType, container);
   }
 
   /**
@@ -98,13 +64,44 @@ public abstract class TypeToken<T> {
    * <p>{@code TypeToken<Foo> token = TypeToken.of(Foo.class);}
    * */  @NonNull
   public static <T> TypeToken<T> of(@NonNull Class<T> typeToken) {
-    if (typeToken.isArray()) {
-      Class<?> componentTypeToken = typeToken.getComponentType();
-      return new ArrayToken<T>(TypeToken.of(componentTypeToken));
-    }
-    return new ClassToken<T>((Class<T>) typeToken);
+    return of((Type) typeToken);
   }
 
+  @NonNull
+  private static <T> TypeToken<T> of(@NonNull Type type) {
+    if(type instanceof WildcardType) {
+      if(((WildcardType) type).getLowerBounds().length == 0) {
+        return of(((WildcardType) type).getUpperBounds()[0]);
+      }
+      throw new IllegalArgumentException("<? super T> is not supported");
+    } else if (type instanceof GenericArrayType) {
+      Type componentType = ((GenericArrayType) type).getGenericComponentType();
+      return new ArrayToken<T>(TypeToken.of(componentType));
+    } else if (type instanceof ParameterizedType) {
+      ParameterizedType parameterizedType = (ParameterizedType) type;
+      Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+      Class<T> rawType = (Class<T>) (parameterizedType.getRawType());
+      TypeTokenContainer container = new TypeTokenContainer() {
+        @NonNull
+        @Override
+        public <T> TypeToken<T> at(int index) {
+          return TypeToken.of(actualTypeArguments[index]);
+        }
+      };
+      return new ClassToken<T>(rawType, container);
+    } else if (type instanceof Class<?>) {
+      Class<T> typeToken = (Class<T>) type;
+      if (typeToken.isArray()) {
+        Class<?> componentTypeToken = typeToken.getComponentType();
+        return new ArrayToken<T>(TypeToken.of(componentTypeToken));
+      }
+      return new ClassToken<T>((Class<T>) typeToken);
+    } else {
+      throw new IllegalArgumentException("xx");
+    }
+  }
+
+  private TypeToken() {}
 
   /**
    *  {@link ClassToken} is used to represent types in a type-safe manner, including Primitive types, Plain class types,
@@ -116,7 +113,7 @@ public abstract class TypeToken<T> {
 
     private ClassToken(Class<T> token) {
       this.rawType = token;
-      typeArguments = null;
+      this.typeArguments = null;
     }
 
     private ClassToken(Class<T> rawType, TypeTokenContainer typeArguments) {
